@@ -1,0 +1,153 @@
+{% extends "domain/layout.html" %}
+
+{% block page_title %}Overview{% endblock %}
+{% block page_title_bc %}Overview{% endblock %}
+{% block page_icon %}bi-speedometer2{% endblock %}
+
+{% block page_content %}
+
+<!-- Stat cards row -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-4 col-lg-2">
+    <a href="{{ url_for('domain_subdomains', domain=domain) }}" class="stat-card text-decoration-none d-block">
+      <div class="stat-card-icon"><i class="bi bi-diagram-3"></i></div>
+      <div class="stat-card-value">{{ data.subdomain_count }}</div>
+      <div class="stat-card-label">Subdomains</div>
+    </a>
+  </div>
+  <div class="col-6 col-md-4 col-lg-2">
+    <a href="{{ url_for('domain_webs', domain=domain) }}" class="stat-card text-decoration-none d-block">
+      <div class="stat-card-icon"><i class="bi bi-globe"></i></div>
+      <div class="stat-card-value">{{ data.web_count }}</div>
+      <div class="stat-card-label">Web Assets</div>
+    </a>
+  </div>
+  <div class="col-6 col-md-4 col-lg-2">
+    <a href="{{ url_for('domain_hosts', domain=domain) }}" class="stat-card text-decoration-none d-block">
+      <div class="stat-card-icon"><i class="bi bi-hdd-network"></i></div>
+      <div class="stat-card-value">{{ data.ip_count }}</div>
+      <div class="stat-card-label">IPs</div>
+    </a>
+  </div>
+  <div class="col-6 col-md-4 col-lg-2">
+    <a href="{{ url_for('domain_screenshots', domain=domain) }}" class="stat-card text-decoration-none d-block">
+      <div class="stat-card-icon"><i class="bi bi-camera"></i></div>
+      <div class="stat-card-value">{{ data.screenshot_count }}</div>
+      <div class="stat-card-label">Screenshots</div>
+    </a>
+  </div>
+  <div class="col-6 col-md-4 col-lg-2">
+    <a href="{{ url_for('domain_subdomains', domain=domain) }}" class="stat-card text-decoration-none d-block">
+      <div class="stat-card-icon"><i class="bi bi-cloud"></i></div>
+      <div class="stat-card-value">{{ data.cloud_count }}</div>
+      <div class="stat-card-label">Cloud Assets</div>
+    </a>
+  </div>
+  <div class="col-6 col-md-4 col-lg-2">
+    <a href="{{ url_for('domain_vulnerabilities', domain=domain) }}"
+       class="stat-card text-decoration-none d-block {% if data.total_vulns > 0 %}stat-card-danger{% endif %}">
+      <div class="stat-card-icon"><i class="bi bi-shield-exclamation"></i></div>
+      <div class="stat-card-value">{{ data.total_vulns }}</div>
+      <div class="stat-card-label">Vuln. Signals</div>
+    </a>
+  </div>
+</div>
+
+<div class="row g-4">
+
+  <!-- Vulnerability breakdown -->
+  <div class="col-12 col-lg-6">
+    <div class="card rftw-card h-100">
+      <div class="card-header d-flex align-items-center gap-2">
+        <i class="bi bi-shield-exclamation text-danger"></i>
+        <span>Vulnerability Signal Breakdown</span>
+        <a href="{{ url_for('domain_vulnerabilities', domain=domain) }}"
+           class="ms-auto text-muted small text-decoration-none">
+          View all <i class="bi bi-arrow-right"></i>
+        </a>
+      </div>
+      <div class="card-body">
+        {% set vuln_colors = {
+          'xss': 'danger',
+          'sqli': 'danger',
+          'ssrf': 'warning',
+          'ssti': 'warning',
+          'lfi': 'warning',
+          'redirect': 'info'
+        } %}
+        {% for vtype, count in data.gf_counts.items() %}
+        <div class="d-flex align-items-center mb-2">
+          <span class="text-uppercase fw-semibold small me-2 vuln-label vuln-{{ vtype }}">{{ vtype }}</span>
+          <div class="progress flex-grow-1 me-2" style="height: 8px;">
+            {% set max_count = data.gf_counts.values() | max if data.gf_counts.values() | max > 0 else 1 %}
+            <div class="progress-bar bg-{{ vuln_colors.get(vtype, 'secondary') }}"
+                 style="width: {{ (count / max_count * 100) | int }}%"></div>
+          </div>
+          <span class="badge bg-{{ vuln_colors.get(vtype, 'secondary') }} vuln-badge">{{ count }}</span>
+        </div>
+        {% endfor %}
+        {% if data.total_vulns == 0 %}
+        <p class="text-muted text-center py-3 mb-0">
+          <i class="bi bi-check-circle text-success me-1"></i>No vulnerability signals detected
+        </p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Hotlist -->
+  <div class="col-12 col-lg-6">
+    <div class="card rftw-card h-100">
+      <div class="card-header d-flex align-items-center gap-2">
+        <i class="bi bi-fire text-warning"></i>
+        <span>Hotlist</span>
+        <span class="ms-auto badge bg-secondary">{{ data.hotlist | length }} hosts</span>
+      </div>
+      <div class="card-body p-0">
+        {% if data.hotlist %}
+        <ul class="list-group list-group-flush">
+          {% for item in data.hotlist %}
+          <li class="list-group-item d-flex justify-content-between align-items-center bg-transparent border-subtle">
+            <span class="font-monospace text-accent small">{{ item.host }}</span>
+            <span class="badge bg-warning text-dark">{{ item.count }} findings</span>
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <p class="text-muted text-center py-3 mb-0">No hotlist entries</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick navigation -->
+  <div class="col-12">
+    <div class="card rftw-card">
+      <div class="card-header">
+        <i class="bi bi-grid me-2"></i>Quick Navigation
+      </div>
+      <div class="card-body">
+        <div class="row g-2">
+          {% for label, endpoint, icon in NAV_ITEMS %}
+          {% if endpoint != 'domain_overview' %}
+          <div class="col-6 col-md-4 col-lg-3">
+            <a href="{{ url_for(endpoint, domain=domain) }}"
+               class="btn btn-outline-secondary w-100 text-start quick-nav-btn">
+              <i class="bi {{ icon }} me-2 text-accent"></i>{{ label }}
+            </a>
+          </div>
+          {% endif %}
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+{% if data.last_scan %}
+<p class="text-muted small mt-3">
+  <i class="bi bi-clock me-1"></i>Last scan: {{ data.last_scan }}
+</p>
+{% endif %}
+{% endblock %}

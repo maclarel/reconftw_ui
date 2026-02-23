@@ -1,0 +1,212 @@
+{% extends "domain/layout.html" %}
+
+{% block page_title %}OSINT{% endblock %}
+{% block page_title_bc %}OSINT{% endblock %}
+{% block page_icon %}bi-search{% endblock %}
+
+{% block page_content %}
+
+<ul class="nav nav-tabs mb-3" role="tablist">
+  <li class="nav-item">
+    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-misconfigs" type="button">
+      3rd-Party Misconfigs
+      {% if data.misconfigs %}
+      <span class="badge bg-danger ms-1">{{ data.misconfigs | length }}</span>
+      {% endif %}
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-whois" type="button">
+      WHOIS / Domain Info
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-dorks" type="button">
+      Google Dorks <span class="badge bg-secondary ms-1">{{ data.dorks | length }}</span>
+    </button>
+  </li>
+  {% if data.azure_domains %}
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-azure" type="button">
+      Azure Tenant <span class="badge bg-secondary ms-1">{{ data.azure_domains | length }}</span>
+    </button>
+  </li>
+  {% endif %}
+  {% if data.postman %}
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-postman" type="button">
+      Postman Leaks <span class="badge bg-warning text-dark ms-1">{{ data.postman | length }}</span>
+    </button>
+  </li>
+  {% endif %}
+  {% if data.scopify %}
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-scope" type="button">
+      Scope
+    </button>
+  </li>
+  {% endif %}
+</ul>
+
+<div class="tab-content">
+
+  <!-- 3rd-party misconfigurations -->
+  <div class="tab-pane fade show active" id="tab-misconfigs">
+    {% if data.misconfigs %}
+    <div class="row g-3">
+      {% for m in data.misconfigs %}
+      <div class="col-12 col-xl-6">
+        <div class="card rftw-card border-danger">
+          <div class="card-header text-danger d-flex align-items-center gap-2">
+            <i class="bi bi-exclamation-octagon-fill"></i>
+            <span>{{ m.service }}</span>
+          </div>
+          <div class="card-body">
+            <p class="mb-2">
+              <strong>URL:</strong>
+              <a href="{{ m.url }}" target="_blank" rel="noopener noreferrer"
+                 class="text-accent font-monospace small">
+                {{ m.url }}<i class="bi bi-box-arrow-up-right ms-1 small"></i>
+              </a>
+            </p>
+            {% if m.description %}
+            <p class="text-muted small mb-2">{{ m.description }}</p>
+            {% endif %}
+            {% if m.references %}
+            <div class="mt-2">
+              <small class="text-muted">References:</small>
+              {% for ref in m.references %}
+              <div>
+                <a href="{{ ref }}" target="_blank" rel="noopener noreferrer"
+                   class="text-info small text-truncate d-block">{{ ref }}</a>
+              </div>
+              {% endfor %}
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="card rftw-card">
+      <div class="card-body text-center py-4 text-muted">
+        <i class="bi bi-check-circle text-success me-2"></i>No third-party misconfigurations detected
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- WHOIS -->
+  <div class="tab-pane fade" id="tab-whois">
+    <div class="card rftw-card">
+      <div class="card-header"><i class="bi bi-info-circle me-2"></i>Domain WHOIS Information</div>
+      <div class="card-body">
+        {% if data.domain_info %}
+        <pre class="text-muted small mb-0 pre-scrollable">{{ data.domain_info }}</pre>
+        {% else %}
+        <p class="text-muted mb-0">No WHOIS data available.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Google Dorks -->
+  <div class="tab-pane fade" id="tab-dorks">
+    <div class="card rftw-card">
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table id="tbl-dorks" class="table table-dark table-hover table-sm rftw-table mb-0">
+            <thead><tr><th>Google Dork</th><th>Search</th></tr></thead>
+            <tbody>
+              {% for dork in data.dorks %}
+              <tr>
+                <td class="font-monospace small text-accent">{{ dork }}</td>
+                <td>
+                  <a href="https://www.google.com/search?q={{ dork | urlencode }}"
+                     target="_blank" rel="noopener noreferrer"
+                     class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-search me-1"></i>Search
+                  </a>
+                </td>
+              </tr>
+              {% else %}
+              <tr><td colspan="2" class="text-muted">No dorks available</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Azure Tenant -->
+  {% if data.azure_domains %}
+  <div class="tab-pane fade" id="tab-azure">
+    <div class="card rftw-card">
+      <div class="card-body p-0">
+        <table id="tbl-azure" class="table table-dark table-hover table-sm rftw-table mb-0">
+          <thead><tr><th>Azure Tenant Domain</th></tr></thead>
+          <tbody>
+            {% for d in data.azure_domains %}
+            <tr><td class="font-monospace text-accent">{{ d }}</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Postman Leaks -->
+  {% if data.postman %}
+  <div class="tab-pane fade" id="tab-postman">
+    <div class="card rftw-card border-warning">
+      <div class="card-header text-warning">
+        <i class="bi bi-exclamation-triangle me-2"></i>Postman Workspace Leaks
+      </div>
+      <div class="card-body p-0">
+        <table id="tbl-postman" class="table table-dark table-hover table-sm rftw-table mb-0">
+          <thead><tr><th>Postman Leak Entry</th></tr></thead>
+          <tbody>
+            {% for item in data.postman %}
+            <tr><td class="font-monospace small text-warning">{{ item }}</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Scope -->
+  {% if data.scopify %}
+  <div class="tab-pane fade" id="tab-scope">
+    <div class="card rftw-card">
+      <div class="card-body p-0">
+        <table id="tbl-scope" class="table table-dark table-hover table-sm rftw-table mb-0">
+          <thead><tr><th>Scope Entry</th></tr></thead>
+          <tbody>
+            {% for s in data.scopify %}
+            <tr><td class="font-monospace small text-muted">{{ s }}</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+$(function() {
+  initDataTable('#tbl-dorks');
+  initDataTable('#tbl-azure');
+  initDataTable('#tbl-postman');
+  initDataTable('#tbl-scope');
+});
+</script>
+{% endblock %}

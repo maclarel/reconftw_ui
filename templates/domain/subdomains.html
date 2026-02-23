@@ -1,0 +1,182 @@
+{% extends "domain/layout.html" %}
+
+{% block page_title %}Subdomains{% endblock %}
+{% block page_title_bc %}Subdomains{% endblock %}
+{% block page_icon %}bi-diagram-3{% endblock %}
+
+{% block page_content %}
+
+<!-- Summary row -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="stat-card">
+      <div class="stat-card-icon"><i class="bi bi-diagram-3"></i></div>
+      <div class="stat-card-value">{{ data.count }}</div>
+      <div class="stat-card-label">Total Subdomains</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card">
+      <div class="stat-card-icon"><i class="bi bi-cloud"></i></div>
+      <div class="stat-card-value">{{ data.cloud_assets | length }}</div>
+      <div class="stat-card-label">Cloud Assets</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card">
+      <div class="stat-card-icon"><i class="bi bi-bucket"></i></div>
+      <div class="stat-card-value">{{ data.open_buckets | length }}</div>
+      <div class="stat-card-label">Open Buckets</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card">
+      <div class="stat-card-icon"><i class="bi bi-transfer"></i></div>
+      <div class="stat-card-value">{{ data.zonetransfer | length }}</div>
+      <div class="stat-card-label">Zone Transfer</div>
+    </div>
+  </div>
+</div>
+
+<!-- Tabs -->
+<ul class="nav nav-tabs mb-3" id="subTabs" role="tablist">
+  <li class="nav-item">
+    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-all" type="button">
+      All Subdomains <span class="badge bg-secondary ms-1">{{ data.count }}</span>
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-cloud" type="button">
+      Cloud Assets <span class="badge bg-secondary ms-1">{{ data.cloud_assets | length }}</span>
+    </button>
+  </li>
+  {% if data.open_buckets %}
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-buckets" type="button">
+      Open Buckets <span class="badge bg-danger ms-1">{{ data.open_buckets | length }}</span>
+    </button>
+  </li>
+  {% endif %}
+  {% if data.zonetransfer %}
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-zone" type="button">
+      Zone Transfer <span class="badge bg-warning text-dark ms-1">{{ data.zonetransfer | length }}</span>
+    </button>
+  </li>
+  {% endif %}
+</ul>
+
+<div class="tab-content">
+
+  <!-- All subdomains with DNS enrichment -->
+  <div class="tab-pane fade show active" id="tab-all">
+    <div class="card rftw-card">
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table id="tbl-subdomains" class="table table-dark table-hover table-sm rftw-table mb-0">
+            <thead>
+              <tr>
+                <th>Subdomain</th>
+                <th>IP(s)</th>
+                <th>CNAME</th>
+                <th>TTL</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for sub in data.subdomains %}
+              <tr>
+                <td class="font-monospace text-accent">{{ sub.host }}</td>
+                <td class="font-monospace small">
+                  {% for ip in sub.ips %}
+                  <span class="badge bg-dark border border-subtle me-1">{{ ip }}</span>
+                  {% endfor %}
+                </td>
+                <td class="font-monospace small text-muted">
+                  {% for c in sub.cname %}{{ c }}{% if not loop.last %}, {% endif %}{% endfor %}
+                </td>
+                <td class="text-muted small">{{ sub.ttl }}</td>
+                <td>
+                  {% if sub.status %}
+                  <span class="badge
+                    {% if sub.status == 'NOERROR' %}bg-success
+                    {% elif sub.status == 'NXDOMAIN' %}bg-danger
+                    {% else %}bg-secondary{% endif %}">
+                    {{ sub.status }}
+                  </span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cloud assets -->
+  <div class="tab-pane fade" id="tab-cloud">
+    <div class="card rftw-card">
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table id="tbl-cloud" class="table table-dark table-hover table-sm rftw-table mb-0">
+            <thead><tr><th>Cloud Asset</th></tr></thead>
+            <tbody>
+              {% for asset in data.cloud_assets %}
+              <tr><td class="font-monospace text-accent">{{ asset }}</td></tr>
+              {% else %}
+              <tr><td class="text-muted">No cloud assets found</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Open buckets -->
+  {% if data.open_buckets %}
+  <div class="tab-pane fade" id="tab-buckets">
+    <div class="card rftw-card border-danger">
+      <div class="card-header text-danger">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>Open / Misconfigured Cloud Buckets
+      </div>
+      <div class="card-body p-0">
+        <ul class="list-group list-group-flush">
+          {% for bucket in data.open_buckets %}
+          <li class="list-group-item bg-transparent border-subtle">
+            <span class="font-monospace text-danger">{{ bucket }}</span>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Zone transfer -->
+  {% if data.zonetransfer %}
+  <div class="tab-pane fade" id="tab-zone">
+    <div class="card rftw-card border-warning">
+      <div class="card-header text-warning">
+        <i class="bi bi-exclamation-triangle me-2"></i>Zone Transfer Results
+      </div>
+      <div class="card-body">
+        <pre class="text-warning small mb-0 pre-scrollable">{{ data.zonetransfer | join('\n') }}</pre>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+$(function() {
+  initDataTable('#tbl-subdomains');
+  initDataTable('#tbl-cloud');
+});
+</script>
+{% endblock %}

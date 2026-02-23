@@ -1,0 +1,209 @@
+{% extends "domain/layout.html" %}
+
+{% block page_title %}Hosts & IPs{% endblock %}
+{% block page_title_bc %}Hosts & IPs{% endblock %}
+{% block page_icon %}bi-hdd-network{% endblock %}
+
+{% block page_content %}
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-4">
+    <div class="stat-card">
+      <div class="stat-card-icon"><i class="bi bi-hdd-network"></i></div>
+      <div class="stat-card-value">{{ data.count }}</div>
+      <div class="stat-card-label">Unique IPs</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-4">
+    <div class="stat-card">
+      <div class="stat-card-icon"><i class="bi bi-router"></i></div>
+      <div class="stat-card-value">{{ data.shodan | length }}</div>
+      <div class="stat-card-label">Shodan Records</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-4">
+    <div class="stat-card {% if data.shodan | selectattr('vulns') | list | length > 0 %}stat-card-danger{% endif %}">
+      <div class="stat-card-icon"><i class="bi bi-bug"></i></div>
+      <div class="stat-card-value">
+        {{ data.shodan | sum(attribute='vulns', start=[]) | list | length }}
+      </div>
+      <div class="stat-card-label">CVEs (Shodan)</div>
+    </div>
+  </div>
+</div>
+
+<ul class="nav nav-tabs mb-3" role="tablist">
+  <li class="nav-item">
+    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-shodan" type="button">
+      Shodan Data <span class="badge bg-secondary ms-1">{{ data.shodan | length }}</span>
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-ipinfo" type="button">
+      IP Geo Info <span class="badge bg-secondary ms-1">{{ data.ipinfo | length }}</span>
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-ips" type="button">
+      IP List <span class="badge bg-secondary ms-1">{{ data.ips | length }}</span>
+    </button>
+  </li>
+  {% if data.cdn_providers %}
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-cdn" type="button">
+      CDN Providers
+    </button>
+  </li>
+  {% endif %}
+</ul>
+
+<div class="tab-content">
+
+  <!-- Shodan -->
+  <div class="tab-pane fade show active" id="tab-shodan">
+    <div class="card rftw-card">
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table id="tbl-shodan" class="table table-dark table-hover table-sm rftw-table mb-0">
+            <thead>
+              <tr>
+                <th>IP</th>
+                <th>Hostnames</th>
+                <th>Ports</th>
+                <th>CPEs</th>
+                <th>Tags</th>
+                <th>CVEs</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for host in data.shodan %}
+              <tr>
+                <td class="font-monospace text-accent">{{ host.get('ip', '') }}</td>
+                <td class="small text-muted">
+                  {% for h in host.get('hostnames', []) %}
+                  <div>{{ h }}</div>
+                  {% endfor %}
+                </td>
+                <td class="small font-monospace">
+                  {% for p in host.get('ports', []) %}
+                  <span class="badge bg-dark border border-subtle me-1">{{ p }}</span>
+                  {% endfor %}
+                </td>
+                <td class="small text-muted" style="max-width:200px;">
+                  {% for cpe in host.get('cpes', []) %}
+                  <div class="text-truncate" title="{{ cpe }}">{{ cpe }}</div>
+                  {% endfor %}
+                </td>
+                <td class="small">
+                  {% for tag in host.get('tags', []) %}
+                  <span class="badge bg-secondary me-1">{{ tag }}</span>
+                  {% endfor %}
+                </td>
+                <td>
+                  {% set vulns = host.get('vulns', []) %}
+                  {% if vulns %}
+                  {% for cve in vulns %}
+                  <span class="badge bg-danger me-1">{{ cve }}</span>
+                  {% endfor %}
+                  {% else %}
+                  <span class="text-muted small">—</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- IP Geo Info -->
+  <div class="tab-pane fade" id="tab-ipinfo">
+    <div class="card rftw-card">
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table id="tbl-ipinfo" class="table table-dark table-hover table-sm rftw-table mb-0">
+            <thead>
+              <tr>
+                <th>IP</th>
+                <th>Hostname</th>
+                <th>City</th>
+                <th>Region</th>
+                <th>Country</th>
+                <th>Org / ASN</th>
+                <th>Timezone</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for info in data.ipinfo %}
+              <tr>
+                <td class="font-monospace text-accent">{{ info.get('ip', '') }}</td>
+                <td class="small font-monospace text-muted">{{ info.get('hostname', '') }}</td>
+                <td class="small">{{ info.get('city', '') }}</td>
+                <td class="small">{{ info.get('region', '') }}</td>
+                <td class="small">
+                  {% if info.get('country') %}
+                  <span class="badge bg-secondary">{{ info.get('country') }}</span>
+                  {% endif %}
+                </td>
+                <td class="small text-muted">{{ info.get('org', '') }}</td>
+                <td class="small text-muted">{{ info.get('timezone', '') }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Plain IP list -->
+  <div class="tab-pane fade" id="tab-ips">
+    <div class="card rftw-card">
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table id="tbl-ips" class="table table-dark table-hover table-sm rftw-table mb-0">
+            <thead><tr><th>IP Address</th></tr></thead>
+            <tbody>
+              {% for ip in data.ips %}
+              <tr><td class="font-monospace text-accent">{{ ip }}</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CDN -->
+  {% if data.cdn_providers %}
+  <div class="tab-pane fade" id="tab-cdn">
+    <div class="card rftw-card">
+      <div class="card-body p-0">
+        <table id="tbl-cdn" class="table table-dark table-hover table-sm rftw-table mb-0">
+          <thead><tr><th>CDN Provider Entry</th></tr></thead>
+          <tbody>
+            {% for line in data.cdn_providers %}
+            <tr><td class="small font-monospace text-muted">{{ line }}</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+$(function() {
+  initDataTable('#tbl-shodan');
+  initDataTable('#tbl-ipinfo');
+  initDataTable('#tbl-ips');
+  initDataTable('#tbl-cdn');
+});
+</script>
+{% endblock %}

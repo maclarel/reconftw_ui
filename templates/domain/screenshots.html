@@ -1,0 +1,130 @@
+{% extends "domain/layout.html" %}
+
+{% block page_title %}Screenshots{% endblock %}
+{% block page_title_bc %}Screenshots{% endblock %}
+{% block page_icon %}bi-camera{% endblock %}
+
+{% block page_content %}
+
+<div class="d-flex align-items-center mb-3 gap-3">
+  <span class="badge bg-secondary">{{ data | length }} screenshots</span>
+  <div class="ms-auto d-flex gap-2">
+    <button class="btn btn-sm btn-outline-secondary" id="btn-grid" title="Grid view">
+      <i class="bi bi-grid-3x3-gap"></i>
+    </button>
+    <button class="btn btn-sm btn-outline-secondary" id="btn-list" title="List view">
+      <i class="bi bi-list-ul"></i>
+    </button>
+  </div>
+</div>
+
+{% if data %}
+
+<!-- Grid view (default) -->
+<div id="view-grid">
+  <div class="row g-3" id="screenshot-grid">
+    {% for shot in data %}
+    <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+      <div class="card rftw-card screenshot-card h-100"
+           data-bs-toggle="modal" data-bs-target="#screenshotModal"
+           data-url="{{ shot.url }}"
+           data-src="{{ url_for('serve_screenshot', domain=domain, filename=shot.filename) }}">
+        <div class="screenshot-thumb">
+          <img src="{{ url_for('serve_screenshot', domain=domain, filename=shot.filename) }}"
+               alt="{{ shot.url }}"
+               loading="lazy"
+               onerror="this.parentElement.innerHTML='<div class=\'no-screenshot-thumb\'><i class=\'bi bi-image text-muted\'></i></div>'">
+        </div>
+        <div class="card-footer bg-transparent border-subtle py-2 px-2">
+          <div class="font-monospace small text-accent text-truncate" title="{{ shot.url }}">
+            {{ shot.url }}
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- List view (hidden by default) -->
+<div id="view-list" class="d-none">
+  <div class="card rftw-card">
+    <div class="card-body p-0">
+      <table id="tbl-screenshots" class="table table-dark table-hover table-sm rftw-table mb-0">
+        <thead><tr><th>URL</th><th>Preview</th></tr></thead>
+        <tbody>
+          {% for shot in data %}
+          <tr>
+            <td class="font-monospace text-accent">{{ shot.url }}</td>
+            <td>
+              <img src="{{ url_for('serve_screenshot', domain=domain, filename=shot.filename) }}"
+                   class="screenshot-thumb-sm"
+                   loading="lazy">
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Lightbox modal -->
+<div class="modal fade" id="screenshotModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered">
+    <div class="modal-content bg-dark border-subtle">
+      <div class="modal-header border-subtle py-2">
+        <h6 class="modal-title font-monospace text-accent" id="modalUrl"></h6>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body text-center p-2">
+        <img id="modalImg" src="" alt="" class="img-fluid rounded" style="max-height: 80vh;">
+      </div>
+      <div class="modal-footer border-subtle py-2 justify-content-start">
+        <a id="modalLink" href="#" target="_blank" rel="noopener noreferrer"
+           class="btn btn-outline-secondary btn-sm">
+          <i class="bi bi-box-arrow-up-right me-1"></i>Open URL
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% else %}
+<div class="card rftw-card">
+  <div class="card-body text-muted text-center py-5">
+    <i class="bi bi-camera display-4 d-block mb-3"></i>
+    No screenshots available.
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// View toggle
+document.getElementById('btn-grid').addEventListener('click', function() {
+  document.getElementById('view-grid').classList.remove('d-none');
+  document.getElementById('view-list').classList.add('d-none');
+});
+document.getElementById('btn-list').addEventListener('click', function() {
+  document.getElementById('view-grid').classList.add('d-none');
+  document.getElementById('view-list').classList.remove('d-none');
+  if (window._screenshotTableInit) return;
+  window._screenshotTableInit = true;
+  initDataTable('#tbl-screenshots', { columnDefs: [{ orderable: false, targets: 1 }] });
+});
+
+// Screenshot lightbox
+document.querySelectorAll('.screenshot-card').forEach(function(card) {
+  card.addEventListener('click', function() {
+    const url = this.dataset.url;
+    const src = this.dataset.src;
+    document.getElementById('modalImg').src = src;
+    document.getElementById('modalUrl').textContent = url;
+    document.getElementById('modalLink').href = url;
+  });
+});
+</script>
+{% endblock %}

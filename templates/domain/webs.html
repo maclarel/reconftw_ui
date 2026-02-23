@@ -1,0 +1,203 @@
+{% extends "domain/layout.html" %}
+
+{% block page_title %}Web Assets{% endblock %}
+{% block page_title_bc %}Web Assets{% endblock %}
+{% block page_icon %}bi-globe{% endblock %}
+
+{% block page_content %}
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="stat-card">
+      <div class="stat-card-icon"><i class="bi bi-globe"></i></div>
+      <div class="stat-card-value">{{ data.count }}</div>
+      <div class="stat-card-label">Web Endpoints</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card">
+      <div class="stat-card-icon"><i class="bi bi-shield"></i></div>
+      <div class="stat-card-value">{{ data.wafs | length }}</div>
+      <div class="stat-card-label">WAF Detected</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card">
+      <div class="stat-card-icon"><i class="bi bi-link-45deg"></i></div>
+      <div class="stat-card-value">{{ data.url_extract | length }}</div>
+      <div class="stat-card-label">Extracted URLs</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card">
+      <div class="stat-card-icon"><i class="bi bi-file-earmark-code"></i></div>
+      <div class="stat-card-value">{{ data.urls_by_ext | length }}</div>
+      <div class="stat-card-label">URLs by Ext.</div>
+    </div>
+  </div>
+</div>
+
+<!-- Tabs -->
+<ul class="nav nav-tabs mb-3" id="webTabs" role="tablist">
+  <li class="nav-item">
+    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-webs-detail" type="button">
+      Full Probe Data <span class="badge bg-secondary ms-1">{{ data.web_full_info | length }}</span>
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-wafs" type="button">
+      WAFs <span class="badge bg-secondary ms-1">{{ data.wafs | length }}</span>
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-urls-ext" type="button">
+      URLs by Extension
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-extracted" type="button">
+      Extracted URLs <span class="badge bg-secondary ms-1">{{ data.url_extract | length }}</span>
+    </button>
+  </li>
+</ul>
+
+<div class="tab-content">
+
+  <!-- Full probe data -->
+  <div class="tab-pane fade show active" id="tab-webs-detail">
+    <div class="card rftw-card">
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table id="tbl-webs" class="table table-dark table-hover table-sm rftw-table mb-0">
+            <thead>
+              <tr>
+                <th>URL</th>
+                <th>Status</th>
+                <th>Title</th>
+                <th>Technologies</th>
+                <th>Server</th>
+                <th>CDN</th>
+                <th>IP</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for w in data.web_full_info %}
+              {% if w is mapping %}
+              <tr>
+                <td>
+                  <a href="{{ w.get('url', '#') }}" target="_blank" rel="noopener noreferrer"
+                     class="text-accent font-monospace small text-decoration-none">
+                    {{ w.get('url', '') }}
+                    <i class="bi bi-box-arrow-up-right ms-1 small"></i>
+                  </a>
+                </td>
+                <td>
+                  {% set sc = w.get('status_code', '') %}
+                  <span class="badge
+                    {% if sc and sc < 300 %}bg-success
+                    {% elif sc and sc < 400 %}bg-info text-dark
+                    {% elif sc and sc < 500 %}bg-warning text-dark
+                    {% elif sc %}bg-danger
+                    {% else %}bg-secondary{% endif %}">
+                    {{ sc if sc else '—' }}
+                  </span>
+                </td>
+                <td class="small text-muted">{{ w.get('title', '') | truncate(50) }}</td>
+                <td class="small">
+                  {% for tech in w.get('tech', []) %}
+                  <span class="badge bg-dark border border-subtle me-1">{{ tech }}</span>
+                  {% endfor %}
+                </td>
+                <td class="small font-monospace text-muted">{{ w.get('webserver', '') }}</td>
+                <td class="small text-muted">{{ w.get('cdn_name', '') }}</td>
+                <td class="small font-monospace text-muted">{{ w.get('host_ip', '') }}</td>
+              </tr>
+              {% endif %}
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WAFs -->
+  <div class="tab-pane fade" id="tab-wafs">
+    {% if data.wafs %}
+    <div class="card rftw-card">
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table id="tbl-wafs" class="table table-dark table-hover table-sm rftw-table mb-0">
+            <thead>
+              <tr><th>URL</th><th>WAF Detected</th></tr>
+            </thead>
+            <tbody>
+              {% for w in data.wafs %}
+              <tr>
+                <td class="font-monospace text-accent small">{{ w.url }}</td>
+                <td><span class="badge bg-warning text-dark">{{ w.waf }}</span></td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    {% else %}
+    <div class="card rftw-card"><div class="card-body text-muted text-center py-4">No WAF data available</div></div>
+    {% endif %}
+  </div>
+
+  <!-- URLs by extension -->
+  <div class="tab-pane fade" id="tab-urls-ext">
+    <div class="card rftw-card">
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table id="tbl-urls-ext" class="table table-dark table-hover table-sm rftw-table mb-0">
+            <thead><tr><th>URL</th></tr></thead>
+            <tbody>
+              {% for url in data.urls_by_ext %}
+              <tr><td class="font-monospace text-accent small">{{ url }}</td></tr>
+              {% else %}
+              <tr><td class="text-muted">No data available</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Extracted URLs -->
+  <div class="tab-pane fade" id="tab-extracted">
+    <div class="card rftw-card">
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table id="tbl-extracted" class="table table-dark table-hover table-sm rftw-table mb-0">
+            <thead><tr><th>URL</th></tr></thead>
+            <tbody>
+              {% for url in data.url_extract %}
+              <tr><td class="font-monospace text-accent small">{{ url }}</td></tr>
+              {% else %}
+              <tr><td class="text-muted">No extracted URLs available</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+$(function() {
+  initDataTable('#tbl-webs');
+  initDataTable('#tbl-wafs');
+  initDataTable('#tbl-urls-ext');
+  initDataTable('#tbl-extracted');
+});
+</script>
+{% endblock %}

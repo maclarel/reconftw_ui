@@ -1,0 +1,105 @@
+{% extends "domain/layout.html" %}
+
+{% block page_title %}Vulnerabilities{% endblock %}
+{% block page_title_bc %}Vulnerabilities{% endblock %}
+{% block page_icon %}bi-shield-exclamation{% endblock %}
+
+{% block page_content %}
+
+{% set vuln_meta = {
+  'xss':      {'label': 'XSS',      'color': 'danger',  'icon': 'bi-code-slash',        'desc': 'Cross-Site Scripting patterns detected in URLs'},
+  'sqli':     {'label': 'SQLi',     'color': 'danger',  'icon': 'bi-database-exclamation','desc': 'SQL Injection patterns detected in URLs'},
+  'ssrf':     {'label': 'SSRF',     'color': 'warning', 'icon': 'bi-arrow-repeat',       'desc': 'Server-Side Request Forgery patterns'},
+  'ssti':     {'label': 'SSTI',     'color': 'warning', 'icon': 'bi-braces-asterisk',    'desc': 'Server-Side Template Injection patterns'},
+  'lfi':      {'label': 'LFI',      'color': 'warning', 'icon': 'bi-folder2-open',       'desc': 'Local File Inclusion patterns'},
+  'redirect': {'label': 'Redirect', 'color': 'info',    'icon': 'bi-arrow-left-right',   'desc': 'Open redirect patterns'},
+  'endpoints':{'label': 'Endpoints','color': 'secondary','icon': 'bi-link-45deg',         'desc': 'Interesting endpoints discovered'},
+} %}
+
+{% if data.total == 0 %}
+<div class="card rftw-card">
+  <div class="card-body text-center py-5">
+    <i class="bi bi-check-circle-fill text-success display-4 d-block mb-3"></i>
+    <h4 class="text-muted">No vulnerability signals detected</h4>
+    <p class="text-muted">GF pattern scans found no potential vulnerability indicators.</p>
+  </div>
+</div>
+{% else %}
+
+<!-- Summary badges -->
+<div class="row g-3 mb-4">
+  {% for vtype, urls in data.findings.items() %}
+  {% set meta = vuln_meta.get(vtype, {}) %}
+  {% if urls %}
+  <div class="col-6 col-md-4 col-lg-3">
+    <div class="stat-card stat-card-{{ meta.get('color', 'secondary') }}">
+      <div class="stat-card-icon"><i class="bi {{ meta.get('icon', 'bi-exclamation') }}"></i></div>
+      <div class="stat-card-value">{{ urls | length }}</div>
+      <div class="stat-card-label">{{ meta.get('label', vtype | upper) }}</div>
+    </div>
+  </div>
+  {% endif %}
+  {% endfor %}
+</div>
+
+<!-- One section per vuln type -->
+{% for vtype, urls in data.findings.items() %}
+{% if urls %}
+{% set meta = vuln_meta.get(vtype, {}) %}
+<div class="card rftw-card mb-3 border-{{ meta.get('color', 'secondary') }}-subtle">
+  <div class="card-header d-flex align-items-center gap-2">
+    <i class="bi {{ meta.get('icon', 'bi-exclamation') }} text-{{ meta.get('color', 'secondary') }}"></i>
+    <span class="fw-semibold">{{ meta.get('label', vtype | upper) }}</span>
+    <span class="badge bg-{{ meta.get('color', 'secondary') }} ms-1">{{ urls | length }}</span>
+    <span class="text-muted small ms-2">{{ meta.get('desc', '') }}</span>
+    <button class="btn btn-sm btn-outline-secondary ms-auto"
+            onclick="copyList('urls-{{ vtype }}')"
+            title="Copy all URLs">
+      <i class="bi bi-clipboard me-1"></i>Copy
+    </button>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table id="tbl-{{ vtype }}"
+             class="table table-dark table-hover table-sm rftw-table mb-0">
+        <thead><tr><th>URL</th></tr></thead>
+        <tbody id="urls-{{ vtype }}">
+          {% for url in urls %}
+          <tr>
+            <td>
+              <a href="{{ url }}" target="_blank" rel="noopener noreferrer"
+                 class="text-{{ meta.get('color', 'accent') }} font-monospace small text-decoration-none">
+                {{ url }}
+                <i class="bi bi-box-arrow-up-right ms-1"></i>
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endfor %}
+
+{% endif %}
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+$(function() {
+  {% for vtype in ['xss','sqli','ssrf','ssti','lfi','redirect','endpoints'] %}
+  initDataTable('#tbl-{{ vtype }}');
+  {% endfor %}
+});
+
+function copyList(tbodyId) {
+  const rows = document.querySelectorAll('#' + tbodyId + ' tr');
+  const text = Array.from(rows).map(r => r.querySelector('a')?.href || r.textContent.trim()).join('\n');
+  navigator.clipboard.writeText(text).then(() => {
+    showToast('Copied ' + rows.length + ' URLs to clipboard');
+  });
+}
+</script>
+{% endblock %}

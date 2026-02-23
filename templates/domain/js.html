@@ -1,0 +1,77 @@
+{% extends "domain/layout.html" %}
+
+{% block page_title %}JS Analysis{% endblock %}
+{% block page_title_bc %}JS Analysis{% endblock %}
+{% block page_icon %}bi-filetype-js{% endblock %}
+
+{% block page_content %}
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-4">
+    <div class="stat-card">
+      <div class="stat-card-icon"><i class="bi bi-filetype-js"></i></div>
+      <div class="stat-card-value">{{ data.count }}</div>
+      <div class="stat-card-label">Extracted URLs</div>
+    </div>
+  </div>
+</div>
+
+<div class="card rftw-card">
+  <div class="card-header d-flex align-items-center gap-2">
+    <i class="bi bi-link-45deg text-accent"></i>
+    <span>URLs Extracted from JavaScript Files</span>
+    <button class="btn btn-sm btn-outline-secondary ms-auto"
+            onclick="copyAllUrls()" title="Copy all URLs">
+      <i class="bi bi-clipboard me-1"></i>Copy All
+    </button>
+  </div>
+  <div class="card-body p-0">
+    {% if data.urls %}
+    <div class="table-responsive">
+      <table id="tbl-js-urls" class="table table-dark table-hover table-sm rftw-table mb-0">
+        <thead>
+          <tr>
+            <th>URL</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for url in data.urls %}
+          <tr>
+            <td>
+              {% if url.startswith('http') %}
+              <a href="{{ url }}" target="_blank" rel="noopener noreferrer"
+                 class="text-accent font-monospace small text-decoration-none">
+                {{ url }}<i class="bi bi-box-arrow-up-right ms-1 small"></i>
+              </a>
+              {% else %}
+              <span class="font-monospace small text-accent">{{ url }}</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="text-muted text-center py-4">No JS-extracted URLs available.</div>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+$(function() { initDataTable('#tbl-js-urls'); });
+
+function copyAllUrls() {
+  const rows = document.querySelectorAll('#tbl-js-urls tbody tr');
+  const text = Array.from(rows)
+    .map(r => r.querySelector('a')?.href || r.textContent.trim())
+    .join('\n');
+  navigator.clipboard.writeText(text).then(() => {
+    showToast('Copied ' + rows.length + ' URLs to clipboard');
+  });
+}
+</script>
+{% endblock %}

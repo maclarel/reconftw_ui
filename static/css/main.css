@@ -1,0 +1,400 @@
+/* =========================================================
+   ReconFTW UI – Custom Styles
+   Dark security-focused theme layered on Bootstrap 5 dark mode
+   ========================================================= */
+
+:root {
+  --rftw-bg:          #0d1117;
+  --rftw-surface:     #161b22;
+  --rftw-surface-2:   #1c2128;
+  --rftw-border:      #30363d;
+  --rftw-text:        #e6edf3;
+  --rftw-text-muted:  #8b949e;
+  --rftw-accent:      #3fb950;
+  --rftw-accent-blue: #58a6ff;
+  --rftw-danger:      #f85149;
+  --rftw-warning:     #d29922;
+  --rftw-navbar-h:    56px;
+  --rftw-sidebar-w:   230px;
+}
+
+/* ── Global ──────────────────────────────────────────────── */
+html, body {
+  background-color: var(--rftw-bg);
+  color: var(--rftw-text);
+  height: 100%;
+}
+
+.text-accent { color: var(--rftw-accent) !important; }
+
+/* ── Navbar ──────────────────────────────────────────────── */
+.rftw-navbar {
+  background-color: var(--rftw-surface);
+  border-bottom: 1px solid var(--rftw-border);
+  height: var(--rftw-navbar-h);
+  position: sticky;
+  top: 0;
+  z-index: 1030;
+}
+
+.rftw-navbar .navbar-brand { color: var(--rftw-text); }
+.rftw-navbar .nav-link { color: var(--rftw-text-muted); }
+.rftw-navbar .nav-link:hover { color: var(--rftw-accent); }
+
+/* ── Layout: sidebar + main ─────────────────────────────── */
+#wrapper {
+  height: calc(100vh - var(--rftw-navbar-h));
+  overflow: hidden;
+}
+
+.rftw-sidebar {
+  width: var(--rftw-sidebar-w);
+  min-width: var(--rftw-sidebar-w);
+  background-color: var(--rftw-surface);
+  border-right: 1px solid var(--rftw-border);
+  overflow-y: auto;
+  height: 100%;
+}
+
+.sidebar-header {
+  border-bottom: 1px solid var(--rftw-border);
+}
+
+.sidebar-link {
+  color: var(--rftw-text-muted);
+  border-radius: 6px;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.sidebar-link:hover {
+  background-color: var(--rftw-surface-2);
+  color: var(--rftw-text);
+}
+
+.sidebar-link.active {
+  background-color: rgba(63, 185, 80, 0.12);
+  color: var(--rftw-accent) !important;
+  font-weight: 500;
+}
+
+.rftw-main {
+  background-color: var(--rftw-bg);
+  height: 100%;
+  overflow-y: auto;
+}
+
+/* ── Page header ─────────────────────────────────────────── */
+.rftw-page-header {
+  background-color: var(--rftw-surface);
+  border-bottom: 1px solid var(--rftw-border);
+  min-height: 64px;
+}
+
+/* ── Cards ───────────────────────────────────────────────── */
+.rftw-card {
+  background-color: var(--rftw-surface);
+  border: 1px solid var(--rftw-border);
+  border-radius: 8px;
+}
+
+.rftw-card .card-header {
+  background-color: var(--rftw-surface-2);
+  border-bottom: 1px solid var(--rftw-border);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--rftw-text-muted);
+  padding: 0.6rem 1rem;
+}
+
+/* Domain cards on index page */
+.domain-card {
+  background-color: var(--rftw-surface);
+  border: 1px solid var(--rftw-border);
+  border-radius: 8px;
+  color: var(--rftw-text);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease;
+}
+
+.domain-card:hover {
+  border-color: var(--rftw-accent);
+  box-shadow: 0 0 0 1px var(--rftw-accent), 0 4px 16px rgba(63, 185, 80, 0.08);
+  transform: translateY(-1px);
+}
+
+/* ── Stat cards ──────────────────────────────────────────── */
+.stat-card {
+  background-color: var(--rftw-surface);
+  border: 1px solid var(--rftw-border);
+  border-radius: 8px;
+  padding: 1rem;
+  text-align: center;
+  transition: border-color 0.15s ease;
+  color: var(--rftw-text);
+}
+
+.stat-card:hover {
+  border-color: var(--rftw-accent);
+}
+
+.stat-card-icon {
+  font-size: 1.25rem;
+  color: var(--rftw-accent);
+  margin-bottom: 0.4rem;
+}
+
+.stat-card-value {
+  font-size: 1.75rem;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.stat-card-label {
+  font-size: 0.75rem;
+  color: var(--rftw-text-muted);
+  margin-top: 0.25rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.stat-card-danger {
+  border-color: var(--rftw-danger);
+}
+
+.stat-card-danger .stat-card-icon,
+.stat-card-danger .stat-card-value {
+  color: var(--rftw-danger);
+}
+
+/* Mini stat pills (used on index cards) */
+.stat-pill {
+  background-color: var(--rftw-surface-2);
+  border: 1px solid var(--rftw-border);
+  border-radius: 6px;
+  padding: 0.4rem 0.25rem;
+}
+
+.stat-pill-danger {
+  border-color: var(--rftw-danger);
+}
+
+.stat-value {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.stat-label {
+  font-size: 0.65rem;
+  color: var(--rftw-text-muted);
+  text-transform: uppercase;
+}
+
+/* ── Tables ──────────────────────────────────────────────── */
+.rftw-table {
+  font-size: 0.825rem;
+}
+
+.rftw-table th {
+  background-color: var(--rftw-surface-2);
+  color: var(--rftw-text-muted);
+  font-weight: 500;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid var(--rftw-border) !important;
+  white-space: nowrap;
+}
+
+.rftw-table td {
+  border-color: var(--rftw-border);
+  vertical-align: middle;
+  padding: 0.4rem 0.75rem;
+}
+
+.rftw-table tbody tr:hover td {
+  background-color: var(--rftw-surface-2);
+}
+
+/* DataTables overrides for dark theme */
+.dataTables_wrapper .dataTables_filter input,
+.dataTables_wrapper .dataTables_length select {
+  background-color: var(--rftw-surface-2);
+  border: 1px solid var(--rftw-border);
+  color: var(--rftw-text);
+  border-radius: 4px;
+}
+
+.dataTables_wrapper .dataTables_info,
+.dataTables_wrapper .dataTables_paginate .paginate_button {
+  color: var(--rftw-text-muted) !important;
+  font-size: 0.8rem;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button.current {
+  background: var(--rftw-accent) !important;
+  border-color: var(--rftw-accent) !important;
+  color: #000 !important;
+  border-radius: 4px;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+  background: var(--rftw-surface-2) !important;
+  border-color: var(--rftw-border) !important;
+  color: var(--rftw-text) !important;
+}
+
+/* ── Vuln labels ─────────────────────────────────────────── */
+.vuln-label {
+  display: inline-block;
+  min-width: 55px;
+  font-size: 0.7rem;
+}
+
+.vuln-badge { min-width: 28px; }
+.vuln-xss    { color: var(--rftw-danger); }
+.vuln-sqli   { color: var(--rftw-danger); }
+.vuln-ssrf   { color: var(--rftw-warning); }
+.vuln-ssti   { color: var(--rftw-warning); }
+.vuln-lfi    { color: var(--rftw-warning); }
+.vuln-redirect { color: #58a6ff; }
+
+/* ── Screenshots ─────────────────────────────────────────── */
+.screenshot-card {
+  cursor: pointer;
+  border: 1px solid var(--rftw-border);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.screenshot-card:hover {
+  border-color: var(--rftw-accent);
+  box-shadow: 0 0 0 1px var(--rftw-accent);
+}
+
+.screenshot-thumb {
+  height: 140px;
+  overflow: hidden;
+  background-color: var(--rftw-surface-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.screenshot-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top;
+}
+
+.no-screenshot-thumb {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+}
+
+.screenshot-thumb-sm {
+  height: 48px;
+  width: auto;
+  border-radius: 4px;
+}
+
+/* ── Quick-nav buttons ───────────────────────────────────── */
+.quick-nav-btn {
+  font-size: 0.8rem;
+}
+
+/* ── Empty state ─────────────────────────────────────────── */
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+}
+
+/* ── Toast notifications ─────────────────────────────────── */
+#toast-container {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  z-index: 9999;
+}
+
+.rftw-toast {
+  background-color: var(--rftw-surface);
+  border: 1px solid var(--rftw-accent);
+  color: var(--rftw-text);
+  border-radius: 6px;
+  padding: 0.6rem 1rem;
+  font-size: 0.85rem;
+  min-width: 220px;
+}
+
+/* ── Scrollable pre blocks ───────────────────────────────── */
+.pre-scrollable {
+  max-height: 480px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* ── Nav tabs ────────────────────────────────────────────── */
+.nav-tabs .nav-link {
+  color: var(--rftw-text-muted);
+  border-color: transparent;
+  font-size: 0.875rem;
+}
+
+.nav-tabs .nav-link.active {
+  background-color: var(--rftw-surface);
+  border-color: var(--rftw-border) var(--rftw-border) var(--rftw-surface);
+  color: var(--rftw-accent);
+}
+
+.nav-tabs .nav-link:hover:not(.active) {
+  border-color: transparent;
+  color: var(--rftw-text);
+}
+
+.nav-tabs {
+  border-bottom-color: var(--rftw-border);
+}
+
+/* ── Borders ─────────────────────────────────────────────── */
+.border-subtle { border-color: var(--rftw-border) !important; }
+
+/* ── List group ──────────────────────────────────────────── */
+.list-group-item {
+  color: var(--rftw-text);
+  border-color: var(--rftw-border);
+}
+
+/* ── Scrollbar (webkit) ──────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--rftw-border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--rftw-text-muted); }
+
+/* ── Responsive: collapse sidebar on small screens ───────── */
+@media (max-width: 767px) {
+  #wrapper {
+    flex-direction: column;
+    height: auto;
+    overflow: visible;
+  }
+  .rftw-sidebar {
+    width: 100%;
+    min-width: 100%;
+    height: auto;
+    max-height: 240px;
+    border-right: none;
+    border-bottom: 1px solid var(--rftw-border);
+  }
+  .rftw-main {
+    height: auto;
+    overflow: visible;
+  }
+}

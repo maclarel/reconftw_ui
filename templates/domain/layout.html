@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}{{ domain }} – {% block page_title %}{% endblock %} | ReconFTW UI{% endblock %}
+
+{% block page_icon %}bi-circle{% endblock %}
+
+{% block body %}
+<div class="d-flex" id="wrapper">
+
+  <!-- Sidebar -->
+  <nav class="rftw-sidebar d-flex flex-column flex-shrink-0" id="sidebar">
+    <div class="sidebar-header px-3 py-3">
+      <div class="text-accent fw-bold text-truncate" title="{{ domain }}">
+        <i class="bi bi-radar me-2"></i>{{ domain }}
+      </div>
+      <a href="{{ url_for('index') }}" class="text-muted small text-decoration-none">
+        <i class="bi bi-arrow-left me-1"></i>All domains
+      </a>
+    </div>
+
+    <ul class="nav flex-column px-2 pb-3 flex-grow-1">
+      {% for label, endpoint, icon in NAV_ITEMS %}
+      <li class="nav-item">
+        <a class="nav-link sidebar-link {% if active == endpoint %}active{% endif %}"
+           href="{{ url_for(endpoint, domain=domain) }}">
+          <i class="bi {{ icon }} me-2"></i>{{ label }}
+        </a>
+      </li>
+      {% endfor %}
+    </ul>
+
+    <div class="px-3 py-2 border-top border-subtle">
+      <small class="text-muted">
+        <i class="bi bi-arrow-clockwise me-1"></i>
+        Data read live from disk
+      </small>
+    </div>
+  </nav>
+
+  <!-- Main content -->
+  <main class="rftw-main flex-grow-1 overflow-auto">
+    <!-- Page header -->
+    <div class="rftw-page-header px-4 py-3 d-flex align-items-center gap-3">
+      <i class="bi {{ self.page_icon() }} text-accent fs-3"></i>
+      <div>
+        <h2 class="h4 mb-0">{{ self.page_title() }}</h2>
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb mb-0 small">
+            <li class="breadcrumb-item">
+              <a href="{{ url_for('index') }}" class="text-accent">Domains</a>
+            </li>
+            <li class="breadcrumb-item">
+              <a href="{{ url_for('domain_overview', domain=domain) }}" class="text-accent">{{ domain }}</a>
+            </li>
+            <li class="breadcrumb-item active">{{ self.page_title() }}</li>
+          </ol>
+        </nav>
+      </div>
+    </div>
+
+    <div class="px-4 py-3">
+      {% block page_content %}{% endblock %}
+    </div>
+  </main>
+
+</div>
+{% endblock %}

@@ -1,0 +1,133 @@
+{% extends "domain/layout.html" %}
+
+{% block page_title %}Fuzzing{% endblock %}
+{% block page_title_bc %}Fuzzing{% endblock %}
+{% block page_icon %}bi-braces{% endblock %}
+
+{% block page_content %}
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-4">
+    <div class="stat-card">
+      <div class="stat-card-icon"><i class="bi bi-braces"></i></div>
+      <div class="stat-card-value">{{ data.files | length }}</div>
+      <div class="stat-card-label">Hosts Fuzzed</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-4">
+    <div class="stat-card">
+      <div class="stat-card-icon"><i class="bi bi-list-ul"></i></div>
+      <div class="stat-card-value">{{ data.total }}</div>
+      <div class="stat-card-label">Total Paths</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-4">
+    <div class="stat-card">
+      <div class="stat-card-icon"><i class="bi bi-file-text"></i></div>
+      <div class="stat-card-value">{{ data.full | length }}</div>
+      <div class="stat-card-label">Full-scan Paths</div>
+    </div>
+  </div>
+</div>
+
+<!-- Per-host tabs if multiple hosts, otherwise direct table -->
+{% if data.files %}
+
+<ul class="nav nav-tabs mb-3 flex-wrap" id="fuzzTabs" role="tablist">
+  {% for host, results in data.files.items() %}
+  <li class="nav-item">
+    <button class="nav-link {% if loop.first %}active{% endif %}"
+            data-bs-toggle="tab"
+            data-bs-target="#fuzz-{{ loop.index }}"
+            type="button">
+      {{ host }}
+      <span class="badge bg-secondary ms-1">{{ results | length }}</span>
+    </button>
+  </li>
+  {% endfor %}
+  {% if data.full %}
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#fuzz-full" type="button">
+      Full Scan <span class="badge bg-secondary ms-1">{{ data.full | length }}</span>
+    </button>
+  </li>
+  {% endif %}
+</ul>
+
+<div class="tab-content">
+  {% for host, results in data.files.items() %}
+  <div class="tab-pane fade {% if loop.first %}show active{% endif %}" id="fuzz-{{ loop.index }}">
+    {{ _fuzzing_table('tbl-fuzz-' ~ loop.index, results) }}
+  </div>
+  {% endfor %}
+
+  {% if data.full %}
+  <div class="tab-pane fade" id="fuzz-full">
+    {{ _fuzzing_table('tbl-fuzz-full', data.full) }}
+  </div>
+  {% endif %}
+</div>
+
+{% elif data.full %}
+{{ _fuzzing_table('tbl-fuzz-full', data.full) }}
+
+{% else %}
+<div class="card rftw-card">
+  <div class="card-body text-muted text-center py-4">No fuzzing data available.</div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% macro _fuzzing_table(table_id, rows) %}
+<div class="card rftw-card">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table id="{{ table_id }}" class="table table-dark table-hover table-sm rftw-table mb-0">
+        <thead>
+          <tr>
+            <th>Status</th>
+            <th>Length</th>
+            <th>URL / Path</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in rows %}
+          <tr>
+            <td>
+              {% if row.status %}
+              <span class="badge
+                {% if row.status | int < 300 %}bg-success
+                {% elif row.status | int < 400 %}bg-info text-dark
+                {% elif row.status | int < 500 %}bg-warning text-dark
+                {% else %}bg-danger{% endif %}">
+                {{ row.status }}
+              </span>
+              {% else %}
+              <span class="text-muted">—</span>
+              {% endif %}
+            </td>
+            <td class="small text-muted font-monospace">{{ row.length if row.length else '—' }}</td>
+            <td class="font-monospace small text-accent">{{ row.url }}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="3" class="text-muted">No results</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endmacro %}
+
+{% block extra_scripts %}
+<script>
+$(function() {
+  $('table.rftw-table').each(function() {
+    if (!$.fn.DataTable.isDataTable(this)) {
+      initDataTable('#' + this.id);
+    }
+  });
+});
+</script>
+{% endblock %}
