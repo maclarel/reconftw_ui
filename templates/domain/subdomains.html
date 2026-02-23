@@ -9,28 +9,28 @@
 <!-- Summary row -->
 <div class="row g-3 mb-4">
   <div class="col-6 col-md-3">
-    <div class="stat-card">
+    <div class="stat-card" data-tab-target="#tab-all">
       <div class="stat-card-icon"><i class="bi bi-diagram-3"></i></div>
       <div class="stat-card-value">{{ data.count }}</div>
       <div class="stat-card-label">Total Subdomains</div>
     </div>
   </div>
   <div class="col-6 col-md-3">
-    <div class="stat-card">
+    <div class="stat-card" data-tab-target="#tab-cloud">
       <div class="stat-card-icon"><i class="bi bi-cloud"></i></div>
       <div class="stat-card-value">{{ data.cloud_assets | length }}</div>
       <div class="stat-card-label">Cloud Assets</div>
     </div>
   </div>
   <div class="col-6 col-md-3">
-    <div class="stat-card">
+    <div class="stat-card" data-tab-target="#tab-buckets">
       <div class="stat-card-icon"><i class="bi bi-bucket"></i></div>
       <div class="stat-card-value">{{ data.open_buckets | length }}</div>
       <div class="stat-card-label">Open Buckets</div>
     </div>
   </div>
   <div class="col-6 col-md-3">
-    <div class="stat-card">
+    <div class="stat-card" data-tab-target="#tab-zone">
       <div class="stat-card-icon"><i class="bi bi-transfer"></i></div>
       <div class="stat-card-value">{{ data.zonetransfer | length }}</div>
       <div class="stat-card-label">Zone Transfer</div>

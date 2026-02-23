@@ -140,6 +140,10 @@ html, body {
   border-color: var(--rftw-accent);
 }
 
+.stat-card[data-tab-target] {
+  cursor: pointer;
+}
+
 .stat-card-icon {
   font-size: 1.25rem;
   color: var(--rftw-accent);

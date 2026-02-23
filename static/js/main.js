@@ -53,48 +53,101 @@ function showToast(message, duration) {
   }, duration);
 }
 
-// ── Tab switching ─────────────────────────────────────────────────────────
-// Manual implementation — does not rely on Bootstrap's data-API so it works
-// regardless of CDN/SRI issues or DataTables interfering with event delegation.
+// ── Modal utility ─────────────────────────────────────────────────────────
+// Manual show/hide so modals work without Bootstrap's data-API.
+var _activeModal = null;
+var _modalBackdrop = null;
+
+function showModal(id) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  _activeModal = el;
+  el.style.display = 'block';
+  document.body.classList.add('modal-open');
+  _modalBackdrop = document.createElement('div');
+  _modalBackdrop.className = 'modal-backdrop fade';
+  document.body.appendChild(_modalBackdrop);
+  requestAnimationFrame(function () {
+    el.classList.add('show');
+    _modalBackdrop.classList.add('show');
+  });
+  // Click outside the dialog to close
+  el.addEventListener('click', function onBgClick(e) {
+    if (e.target === el) { hideModal(); el.removeEventListener('click', onBgClick); }
+  });
+}
+
+function hideModal() {
+  if (!_activeModal) return;
+  var el = _activeModal;
+  _activeModal = null;
+  el.classList.remove('show');
+  document.body.classList.remove('modal-open');
+  if (_modalBackdrop) { _modalBackdrop.remove(); _modalBackdrop = null; }
+  setTimeout(function () { el.style.display = 'none'; }, 150);
+}
+
+// ── Tab switching + stat card navigation ──────────────────────────────────
+// activateTab is also called directly by stat cards via data-tab-target.
 (function () {
+  function activateTab(targetId) {
+    var targetPane = document.querySelector(targetId);
+    if (!targetPane) return;
+
+    // Update the active state on the corresponding trigger button
+    var trigger = document.querySelector('[data-bs-toggle="tab"][data-bs-target="' + targetId + '"]');
+    if (trigger) {
+      var navTabs = trigger.closest('.nav-tabs, [role="tablist"]');
+      if (navTabs) {
+        navTabs.querySelectorAll('[data-bs-toggle="tab"]').forEach(function (t) {
+          t.classList.remove('active');
+        });
+      }
+      trigger.classList.add('active');
+    }
+
+    // Hide every pane in the same tab-content block, then show the target
+    var tabContent = targetPane.closest('.tab-content');
+    if (tabContent) {
+      tabContent.querySelectorAll('.tab-pane').forEach(function (p) {
+        p.classList.remove('show', 'active');
+      });
+    }
+    targetPane.classList.add('active');
+    requestAnimationFrame(function () {
+      targetPane.classList.add('show');
+      if (window.$ && $.fn.DataTable) {
+        $.fn.DataTable.tables({ visible: true, api: true }).columns.adjust();
+      }
+    });
+  }
+
   document.addEventListener('DOMContentLoaded', function () {
+    // Tab trigger buttons
     document.querySelectorAll('[data-bs-toggle="tab"]').forEach(function (trigger) {
       trigger.addEventListener('click', function (e) {
         e.preventDefault();
-
         var targetId = trigger.getAttribute('data-bs-target');
-        if (!targetId) return;
-        var targetPane = document.querySelector(targetId);
-        if (!targetPane) return;
-
-        // Deactivate every trigger in this nav-tabs list
-        var navTabs = trigger.closest('.nav-tabs, [role="tablist"]');
-        if (navTabs) {
-          navTabs.querySelectorAll('[data-bs-toggle="tab"]').forEach(function (t) {
-            t.classList.remove('active');
-          });
-        }
-        trigger.classList.add('active');
-
-        // Hide every pane in the associated tab-content block
-        var tabContent = targetPane.closest('.tab-content');
-        if (tabContent) {
-          tabContent.querySelectorAll('.tab-pane').forEach(function (p) {
-            p.classList.remove('show', 'active');
-          });
-        }
-
-        // Reveal the target pane; add 'show' on the next frame so the CSS
-        // fade transition fires correctly after 'active' sets display:block.
-        targetPane.classList.add('active');
-        requestAnimationFrame(function () {
-          targetPane.classList.add('show');
-          // Recalculate DataTable column widths now the pane is visible
-          if (window.$ && $.fn.DataTable) {
-            $.fn.DataTable.tables({ visible: true, api: true }).columns.adjust();
-          }
-        });
+        if (targetId) activateTab(targetId);
       });
+    });
+
+    // Stat cards / any element with data-tab-target
+    document.querySelectorAll('[data-tab-target]').forEach(function (el) {
+      el.addEventListener('click', function () {
+        var targetId = el.getAttribute('data-tab-target');
+        if (targetId) activateTab(targetId);
+      });
+    });
+
+    // [data-bs-dismiss="modal"] close buttons
+    document.querySelectorAll('[data-bs-dismiss="modal"]').forEach(function (btn) {
+      btn.addEventListener('click', hideModal);
+    });
+
+    // ESC key closes open modal
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && _activeModal) hideModal();
     });
   });
 })();

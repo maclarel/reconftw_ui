@@ -8,21 +8,21 @@
 
 <div class="row g-3 mb-4">
   <div class="col-6 col-md-4">
-    <div class="stat-card">
+    <div class="stat-card" data-tab-target="#tab-ips">
       <div class="stat-card-icon"><i class="bi bi-hdd-network"></i></div>
       <div class="stat-card-value">{{ data.count }}</div>
       <div class="stat-card-label">Unique IPs</div>
     </div>
   </div>
   <div class="col-6 col-md-4">
-    <div class="stat-card">
+    <div class="stat-card" data-tab-target="#tab-shodan">
       <div class="stat-card-icon"><i class="bi bi-router"></i></div>
       <div class="stat-card-value">{{ data.shodan | length }}</div>
       <div class="stat-card-label">Shodan Records</div>
     </div>
   </div>
   <div class="col-6 col-md-4">
-    <div class="stat-card {% if data.shodan | selectattr('vulns') | list | length > 0 %}stat-card-danger{% endif %}">
+    <div class="stat-card {% if data.shodan | selectattr('vulns') | list | length > 0 %}stat-card-danger{% endif %}" data-tab-target="#tab-shodan">
       <div class="stat-card-icon"><i class="bi bi-bug"></i></div>
       <div class="stat-card-value">
         {{ data.shodan | sum(attribute='vulns', start=[]) | list | length }}

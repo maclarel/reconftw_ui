@@ -26,7 +26,6 @@
     {% for shot in data %}
     <div class="col-12 col-sm-6 col-md-4 col-lg-3">
       <div class="card rftw-card screenshot-card h-100"
-           data-bs-toggle="modal" data-bs-target="#screenshotModal"
            data-url="{{ shot.url }}"
            data-src="{{ url_for('serve_screenshot', domain=domain, filename=shot.filename) }}">
         <div class="screenshot-thumb">
@@ -124,6 +123,7 @@ document.querySelectorAll('.screenshot-card').forEach(function(card) {
     document.getElementById('modalImg').src = src;
     document.getElementById('modalUrl').textContent = url;
     document.getElementById('modalLink').href = url;
+    showModal('screenshotModal');
   });
 });
 </script>
