@@ -17,6 +17,7 @@ from flask import (
     Flask,
     abort,
     render_template,
+    request,
     send_from_directory,
 )
 
@@ -158,8 +159,10 @@ def create_app():
         p = domain_path(domain)
         if not p:
             abort(404)
-        data = parsers.get_fuzzing(p)
-        return render_template("domain/fuzzing.html", domain=domain, data=data, active="domain_fuzzing")
+        status_filter = request.args.get("status", "")
+        active_tab = request.args.get("tab", "")
+        data = parsers.get_fuzzing(p, status_filter)
+        return render_template("domain/fuzzing.html", domain=domain, data=data, active="domain_fuzzing", active_tab=active_tab)
 
     @app.route("/domain/<domain>/screenshots")
     def domain_screenshots(domain):

@@ -6,6 +6,59 @@
 
 {% block page_content %}
 
+{#
+  Determine whether active_tab refers to an actual tab that exists in this render.
+  If not (e.g. stale URL), fall back to the first host tab.
+#}
+{% set ns = namespace(tab_found=false) %}
+{% for host in data.files %}
+  {% if host == active_tab %}{% set ns.tab_found = true %}{% endif %}
+{% endfor %}
+{% if active_tab == '__full__' and data.full %}{% set ns.tab_found = true %}{% endif %}
+
+<!-- Status filter -->
+<form id="fuzz-filter-form" method="get" class="mb-4">
+  <!-- Carries the currently-visible host tab across filter changes -->
+  <input type="hidden" name="tab" id="active-tab-input" value="{{ active_tab }}">
+  <div class="d-flex flex-wrap align-items-center gap-2">
+    <small class="text-muted">Filter by status:</small>
+    <div class="btn-group flex-wrap" role="group">
+
+      <input type="radio" class="btn-check" name="status" id="filter-default" value=""
+             {% if data.active_filter == '' %}checked{% endif %}
+             onchange="submitFuzzFilter(this)">
+      <label class="btn btn-outline-secondary btn-sm" for="filter-default">2xx + 3xx</label>
+
+      {% for code in data.all_statuses %}
+      {% set code_int = code | int %}
+      <input type="radio" class="btn-check" name="status" id="filter-{{ code }}" value="{{ code }}"
+             {% if data.active_filter == code %}checked{% endif %}
+             onchange="submitFuzzFilter(this)">
+      <label class="btn btn-sm
+        {% if code_int < 300 %}btn-outline-success
+        {% elif code_int < 400 %}btn-outline-info
+        {% elif code_int < 500 %}btn-outline-warning
+        {% else %}btn-outline-danger{% endif %}"
+        for="filter-{{ code }}">{{ code }}</label>
+      {% endfor %}
+
+    </div>
+    {% if data.has_other %}
+    <small class="text-muted ms-1">
+      <i class="bi bi-info-circle me-1"></i>Results outside the 2xx–3xx range exist on disk but are not displayed for performance reasons.
+    </small>
+    {% endif %}
+  </div>
+</form>
+
+<div id="fuzz-results" class="position-relative">
+<div id="fuzz-loading-overlay" class="fuzz-loading-overlay" style="display:none" aria-live="polite">
+  <div class="spinner-border text-accent" role="status" style="width:2.5rem;height:2.5rem;">
+    <span class="visually-hidden">Loading…</span>
+  </div>
+  <span class="text-muted small">Loading results…</span>
+</div>
+
 <div class="row g-3 mb-4">
   <div class="col-6 col-md-4">
     <div class="stat-card">
@@ -36,9 +89,10 @@
 <ul class="nav nav-tabs mb-3 flex-wrap" id="fuzzTabs" role="tablist">
   {% for host, results in data.files.items() %}
   <li class="nav-item">
-    <button class="nav-link {% if loop.first %}active{% endif %}"
+    <button class="nav-link {% if host == active_tab or (loop.first and not ns.tab_found) %}active{% endif %}"
             data-bs-toggle="tab"
             data-bs-target="#fuzz-{{ loop.index }}"
+            data-host="{{ host }}"
             type="button">
       {{ host }}
       <span class="badge bg-secondary ms-1">{{ results | length }}</span>
@@ -47,7 +101,11 @@
   {% endfor %}
   {% if data.full %}
   <li class="nav-item">
-    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#fuzz-full" type="button">
+    <button class="nav-link {% if active_tab == '__full__' and ns.tab_found %}active{% endif %}"
+            data-bs-toggle="tab"
+            data-bs-target="#fuzz-full"
+            data-host="__full__"
+            type="button">
       Full Scan <span class="badge bg-secondary ms-1">{{ data.full | length }}</span>
     </button>
   </li>
@@ -56,13 +114,13 @@
 
 <div class="tab-content">
   {% for host, results in data.files.items() %}
-  <div class="tab-pane fade {% if loop.first %}show active{% endif %}" id="fuzz-{{ loop.index }}">
+  <div class="tab-pane fade {% if host == active_tab or (loop.first and not ns.tab_found) %}show active{% endif %}" id="fuzz-{{ loop.index }}">
     {{ _fuzzing_table('tbl-fuzz-' ~ loop.index, results) }}
   </div>
   {% endfor %}
 
   {% if data.full %}
-  <div class="tab-pane fade" id="fuzz-full">
+  <div class="tab-pane fade {% if active_tab == '__full__' and ns.tab_found %}show active{% endif %}" id="fuzz-full">
     {{ _fuzzing_table('tbl-fuzz-full', data.full) }}
   </div>
   {% endif %}
@@ -76,6 +134,8 @@
   <div class="card-body text-muted text-center py-4">No fuzzing data available.</div>
 </div>
 {% endif %}
+
+</div>{# /fuzz-results #}
 
 {% endblock %}
 
@@ -122,11 +182,43 @@
 
 {% block extra_scripts %}
 <script>
+function submitFuzzFilter(radio) {
+  // Capture whichever host tab is currently active so the page reloads on the same tab.
+  var activeBtn = document.querySelector('#fuzzTabs button.active[data-host]');
+  if (activeBtn) {
+    document.getElementById('active-tab-input').value = activeBtn.getAttribute('data-host');
+  }
+  document.getElementById('fuzz-loading-overlay').style.display = 'flex';
+  radio.form.submit();
+}
+
 $(function() {
-  $('table.rftw-table').each(function() {
-    if (!$.fn.DataTable.isDataTable(this)) {
-      initDataTable('#' + this.id);
-    }
+  // Only initialise tables that are currently visible (active tab pane or outside any tab).
+  // Initialising DataTables on hidden elements causes the Responsive extension to misread
+  // column counts and spam TN/4 warnings. Inactive tab tables are initialised lazily below.
+  function initVisibleFuzzTables() {
+    $('.tab-pane.active table.rftw-table').add('table.rftw-table').not('.tab-pane table').each(function() {
+      if (!$.fn.DataTable.isDataTable(this)) {
+        initDataTable('#' + this.id);
+      }
+    });
+  }
+
+  initVisibleFuzzTables();
+
+  // When a fuzz tab button is clicked, wait for the pane to become visible then init.
+  document.querySelectorAll('#fuzzTabs [data-bs-toggle="tab"]').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var targetId = btn.getAttribute('data-bs-target');
+      // requestAnimationFrame in activateTab runs in ~16 ms; 50 ms is enough margin.
+      setTimeout(function() {
+        $(targetId + ' table.rftw-table').each(function() {
+          if (!$.fn.DataTable.isDataTable(this)) {
+            initDataTable('#' + this.id);
+          }
+        });
+      }, 50);
+    });
   });
 });
 </script>

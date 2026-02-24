@@ -318,23 +318,37 @@ def get_vulnerabilities(domain_path):
     }
 
 
-def get_fuzzing(domain_path):
-    """Parse directory fuzzing results."""
+def get_fuzzing(domain_path, status_filter=""):
+    """Parse directory fuzzing results.
+
+    Only rows with status codes 200–399 are ever loaded.
+    status_filter: '' = show all 2xx+3xx, or a specific code in that range (e.g. '200').
+    Any value outside the 200–399 range is silently reset to '' (show all).
+    """
     base = Path(domain_path) / "fuzzing"
+
+    # Reject any filter that would reach outside the 200–399 window.
+    if status_filter and (not status_filter.isdigit() or not (200 <= int(status_filter) < 400)):
+        status_filter = ""
 
     files = {}
     full_results = []
+    all_statuses = set()
+    has_other = False
 
     try:
         entries = sorted(os.listdir(base))
     except (FileNotFoundError, PermissionError, OSError):
-        return {"files": {}, "full": [], "total": 0}
+        return {"files": {}, "full": [], "total": 0, "all_statuses": [], "active_filter": "", "has_other": False}
 
     for name in entries:
         if not name.endswith(".txt"):
             continue
         filepath = base / name
-        parsed = _parse_fuzzing_file(filepath)
+        parsed, statuses, file_has_other = _parse_fuzzing_file(filepath, status_filter)
+        all_statuses |= statuses
+        if file_has_other:
+            has_other = True
         if name == "fuzzing_full.txt":
             full_results = parsed
         else:
@@ -345,19 +359,35 @@ def get_fuzzing(domain_path):
         "files": files,
         "full": full_results,
         "total": sum(len(v) for v in files.values()),
+        "all_statuses": sorted(all_statuses),
+        "active_filter": status_filter,
+        "has_other": has_other,
     }
 
 
-def _parse_fuzzing_file(filepath):
-    """Parse ffuf/feroxbuster output. Format: STATUS LENGTH URL"""
+def _parse_fuzzing_file(filepath, status_filter=""):
+    """Parse ffuf/feroxbuster output. Format: STATUS LENGTH URL
+
+    Only rows with status codes 200–399 are considered. Anything outside that
+    range is counted (sets has_other=True) but never added to results.
+
+    Returns (rows, set_of_2xx_3xx_codes_seen, has_other).
+    """
     results = []
+    all_statuses = set()
+    has_other = False
     for line in _read_lines(filepath):
         parts = line.split(" ", 2)
         if len(parts) == 3 and parts[0].isdigit():
-            results.append({"status": parts[0], "length": parts[1], "url": parts[2]})
-        elif line.strip():
-            results.append({"status": "", "length": "", "url": line.strip()})
-    return results
+            code_str = parts[0]
+            code = int(code_str)
+            if 200 <= code < 400:
+                all_statuses.add(code_str)
+                if not status_filter or code_str == status_filter:
+                    results.append({"status": code_str, "length": parts[1], "url": parts[2]})
+            else:
+                has_other = True
+    return results, all_statuses, has_other
 
 
 def get_screenshots(domain_path):
